@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avatar 造型型錄展示廳</title>
+  <style>
+    :root { 
+      --bg-dark: #1e272e; --panel-bg: #2c3e50; --accent: #3498db; 
+      --text: #ecf0f1; --border: #34495e; 
+    }
+    body { 
+      margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; 
+      background: var(--bg-dark); color: var(--text); 
+      display: flex; height: 100vh; overflow: hidden; 
+    }
+    /* 左側預覽區 */
+    .preview-section { 
+      width: 400px; background: var(--panel-bg); display: flex; 
+      flex-direction: column; align-items: center; justify-content: center; 
+      border-right: 2px solid var(--border); padding: 20px; box-sizing: border-box;
+    }
+    .preview-box { 
+      background: #ffffff; border-radius: 12px; padding: 20px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px;
+    }
+    .json-output { 
+      width: 100%; height: 150px; background: #111; color: #2ecc71; 
+      border: 1px solid var(--border); border-radius: 6px; padding: 10px; 
+      font-family: monospace; font-size: 12px; resize: none; box-sizing: border-box;
+    }
+    /* 右側型錄區 */
+    .catalog-section { 
+      flex: 1; display: flex; flex-direction: column; 
+    }
+    .tabs { 
+      display: flex; background: var(--panel-bg); padding: 10px 20px 0; 
+      gap: 5px; border-bottom: 2px solid var(--border); overflow-x: auto;
+    }
+    .tab-btn { 
+      background: transparent; color: #95a5a6; border: none; padding: 10px 20px; 
+      font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 6px 6px 0 0;
+    }
+    .tab-btn.active { background: var(--accent); color: white; }
+    .tab-btn:hover:not(.active) { background: var(--border); color: white; }
+    
+    .grid-container { 
+      padding: 20px; overflow-y: auto; display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; 
+    }
+    /* 選項按鈕 */
+    .item-card { 
+      background: var(--panel-bg); border: 2px solid var(--border); 
+      border-radius: 8px; padding: 15px 10px; text-align: center; 
+      cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 8px;
+    }
+    .item-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .item-card.selected { border-color: var(--accent); background: rgba(52, 152, 219, 0.2); }
+    .item-icon { font-size: 28px; }
+    .item-name { font-size: 13px; font-weight: bold; }
+    
+    /* 色票 */
+    .color-swatch { 
+      width: 100%; height: 40px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.2); 
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 左側：渲染與狀態反射 -->
+  <div class="preview-section">
+    <div class="preview-box" id="avatar-preview"></div>
+    <h3 style="margin: 0 0 10px 0; align-self: flex-start; font-size: 14px;">當前配置矩陣 (JSON)</h3>
+    <textarea class="json-output" id="config-output" readonly></textarea>
+  </div>
+
+  <!-- 右側：資產型錄映射 -->
+  <div class="catalog-section">
+    <div class="tabs" id="catalog-tabs"></div>
+    <div class="grid-container" id="catalog-grid"></div>
+  </div>
+
+  <!-- 引入核心渲染器 -->
+  <script src="AvatarRenderer.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      'use strict';
+
+      // 檢查依賴
+      if (typeof AvatarRenderer === 'undefined') {
+        document.body.innerHTML = '<h2 style="color:red; padding: 20px;">[系統錯誤] 找不到 AvatarRenderer.js。請確認檔案是否存在於同一目錄下。</h2>';
+        return;
+      }
+
+      // 定義映射結構 (將 Renderer 靜態屬性映射為 UI 介面)
+      const CATALOG_MAP = [
+        { id: 'hairstyle', label: '髮型', dict: AvatarRenderer.HAIR_STYLES },
+        { id: 'hairColor', label: '髮色', type: 'color', options: ['#1a1a1a', '#2c3e50', '#4a2c2a', '#8b4513', '#d4a017', '#e63946', '#ff7eb3', '#7b2cbf'] },
+        { id: 'eyes', label: '眼睛', dict: AvatarRenderer.EYES },
+        { id: 'eyeColor', label: '瞳色', type: 'color', options: ['#74b9ff', '#0984e3', '#a29bfe', '#6c5ce7', '#fd79a8', '#ff7675', '#55efc4', '#00b894', '#fdcb6e', '#1a1a1a'] },
+        { id: 'eyebrow', label: '眉毛', dict: AvatarRenderer.EYEBROWS },
+        { id: 'mouth', label: '嘴巴', dict: AvatarRenderer.MOUTHS },
+        { id: 'accessory', label: '配件', dict: AvatarRenderer.ACCESSORIES },
+        { id: 'skinColor', label: '膚色', type: 'color', options: ['#fff0e6', '#fde2c4', '#f1c27d', '#e0ac69', '#8d5524', '#c68642'] },
+        { id: 'clothesColor', label: '衣服', type: 'color', options: ['#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#6a4c93', '#a29bfe'] }
+      ];
+
+      const state = {
+        activeTab: 'hairstyle',
+        avatar: { ...AvatarRenderer.DEFAULT }
+      };
+
+      const previewEl = document.getElementById('avatar-preview');
+      const outputEl = document.getElementById('config-output');
+      const tabsEl = document.getElementById('catalog-tabs');
+      const gridEl = document.getElementById('catalog-grid');
+
+      // 實例化渲染器
+      const renderer = new AvatarRenderer(previewEl, { size: 240, avatar: state.avatar });
+
+      function updatePreview() {
+        renderer.setAvatar(state.avatar);
+        outputEl.value = JSON.stringify(state.avatar, null, 2);
+      }
+
+      function buildTabs() {
+        tabsEl.innerHTML = '';
+        CATALOG_MAP.forEach(tab => {
+          const btn = document.createElement('button');
+          btn.className = `tab-btn ${state.activeTab === tab.id ? 'active' : ''}`;
+          btn.textContent = tab.label;
+          btn.onclick = () => {
+            state.activeTab = tab.id;
+            buildTabs();
+            buildGrid();
+          };
+          tabsEl.appendChild(btn);
+        });
+      }
+
+      function buildGrid() {
+        gridEl.innerHTML = '';
+        const currentTab = CATALOG_MAP.find(t => t.id === state.activeTab);
+        if (!currentTab) return;
+
+        if (currentTab.type === 'color') {
+          currentTab.options.forEach(color => {
+            const card = document.createElement('div');
+            card.className = `item-card ${state.avatar[currentTab.id] === color ? 'selected' : ''}`;
+            card.innerHTML = `<div class="color-swatch" style="background: ${color}"></div><div class="item-name">${color}</div>`;
+            card.onclick = () => {
+              state.avatar[currentTab.id] = color;
+              updatePreview();
+              buildGrid();
+            };
+            gridEl.appendChild(card);
+          });
+        } else {
+          Object.entries(currentTab.dict).forEach(([key, meta]) => {
+            const card = document.createElement('div');
+            card.className = `item-card ${state.avatar[currentTab.id] === key ? 'selected' : ''}`;
+            card.innerHTML = `<div class="item-icon">${meta.icon || '✨'}</div><div class="item-name">${meta.name || key}</div>`;
+            card.onclick = () => {
+              state.avatar[currentTab.id] = key;
+              updatePreview();
+              buildGrid();
+            };
+            gridEl.appendChild(card);
+          });
+        }
+      }
+
+      // 初始化
+      buildTabs();
+      buildGrid();
+      updatePreview();
+    });
+  </script>
+</body>
+</html>
