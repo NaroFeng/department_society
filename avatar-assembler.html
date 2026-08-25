@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Avatar 組裝台 (Pro 視角控制版)</title>
+  <style>
+    :root { --bg: #1e272e; --panel: #2c3e50; --accent: #3498db; --text: #ecf0f1; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; user-select: none; }
+    
+    /* 左側面板優化：加入自訂捲軸與防擠壓機制 */
+    .toolbar { width: 400px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 2px solid #1a252f; box-sizing: border-box; overflow-y: auto; }
+    .toolbar > * { flex-shrink: 0; } /* 關鍵修復：防止元素被螢幕高度擠壓消失 */
+    
+    .toolbar::-webkit-scrollbar { width: 8px; }
+    .toolbar::-webkit-scrollbar-track { background: #1a252f; }
+    .toolbar::-webkit-scrollbar-thumb { background: #7f8c8d; border-radius: 4px; }
+    .toolbar::-webkit-scrollbar-thumb:hover { background: #95a5a6; }
+
+    h2, h3 { margin: 0; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; }
+    
+    .library { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .lib-btn { background: #34495e; color: #ecf0f1; border: 1px solid #7f8c8d; padding: 8px 4px; cursor: pointer; font-size: 12px; border-radius: 4px; transition: 0.2s; font-weight: bold; }
+    .lib-btn:hover { background: var(--accent); border-color: var(--accent); }
+    
+    /* 視角控制按鈕區 */
+    .camera-group { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+    .cam-btn { background: #8e44ad; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; flex: 1; transition: 0.2s; }
+    .cam-btn:hover { background: #9b59b6; }
+
+    .control-group { display: flex; flex-direction: column; gap: 8px; background: #1a252f; padding: 12px; border-radius: 6px; opacity: 0.5; pointer-events: none; transition: 0.2s; }
+    .control-group.active { opacity: 1; pointer-events: auto; }
+    .control-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    input[type="range"] { flex: 1; margin: 0 10px; }
+    
+    button.action { background: var(--accent); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; transition: 0.2s; font-size: 13px; }
+    button.action:hover { background: #2980b9; }
+    button.action.danger { background: #e74c3c; }
+    button.action.danger:hover { background: #c0392b; }
+    button.action.warning { background: #f39c12; }
+    
+    .hotkey-hint { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; font-size: 12px; color: #bdc3c7; line-height: 1.6; }
+    .hotkey-hint span { color: #f1c40f; font-weight: bold; }
+    
+    /* 打包區塊獨立封裝 */
+    .export-group { background: #111; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #7f8c8d; }
+    #code-output { min-height: 120px; background: #000; color: #2ecc71; border: 1px solid #34495e; font-family: monospace; font-size: 11px; resize: none; padding: 10px; border-radius: 4px; }
+    
+    /* 右側：工作區 */
+    .workspace { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; background: #0b1116; }
+    #canvas-container { width: 450px; height: 540px; background: #fff; box-shadow: 0 0 30px rgba(0,0,0,0.8); position: relative; overflow: hidden; }
+    
+    svg { width: 100%; height: 100%; cursor: crosshair; }
+    svg.panning { cursor: grab !important; }
+    svg.panning:active { cursor: grabbing !important; }
+    .reference { opacity: 0.3; pointer-events: none; }
+    
+    /* 作用中的圖層高亮 */
+    .layer-item { cursor: grab; }
+    .layer-item:active { cursor: grabbing; }
+    .layer-item.selected path:not(.ghost), .layer-item.selected circle { 
+      stroke: #e74c3c !important; 
+      stroke-width: 2px !important; 
+      stroke-dasharray: 4 2; 
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <h2>🔍 視角與縮放 (Camera)</h2>
+    <div class="camera-group">
+      <button class="cam-btn" onclick="setCamera(0, 0, 200, 240)">🌍 全身</button>
+      <button class="cam-btn" onclick="setCamera(50, 40, 100, 120)">👤 臉部特寫</button>
+      <button class="cam-btn" onclick="setCamera(70, 140, 60, 72)">📿 項鍊頸部</button>
+      <button class="cam-btn" onclick="setCamera(55, 105, 40, 48)">👁️ 左眼</button>
+      <button class="cam-btn" onclick="setCamera(105, 105, 40, 48)">👁️ 右眼</button>
+    </div>
+
+    <h2>🧩 素材庫 (Primitives)</h2>
+    <div class="library" id="library-container"></div>
+
+    <h3>🎛 屬性控制</h3>
+    <div class="control-group" id="transform-controls">
+      <div style="display: flex; gap: 5px;">
+        <button class="action warning" onclick="toggleZIndex()" id="btn-zindex">層級：臉前 (切換至後)</button>
+      </div>
+      <div class="control-row"><span>X</span><input type="range" id="t-x" min="-150" max="150" value="0"><span id="val-x">0</span></div>
+      <div class="control-row"><span>Y</span><input type="range" id="t-y" min="-150" max="150" value="0"><span id="val-y">0</span></div>
+      <div class="control-row"><span>Scale</span><input type="range" id="t-scale" min="0.1" max="3" step="0.05" value="1"><span id="val-scale">1.0</span></div>
+      <div class="control-row"><span>Rotate</span><input type="range" id="t-rot" min="-180" max="180" value="0"><span id="val-rot">0</span></div>
+      
+      <div style="display: flex; gap: 5px; margin-top: 5px;">
+        <button class="action" onclick="moveLayer(1)">🔼 上移</button>
+        <button class="action" onclick="moveLayer(-1)">🔽 下移</button>
+        <button class="action danger" onclick="deleteActive()">🗑 刪除</button>
+      </div>
+    </div>
+
+    <div class="hotkey-hint">
+      <b>攝影機操控：</b><br>
+      <span>滑鼠滾輪</span> : 無段放大 / 縮小<br>
+      <span>按住空白鍵 + 拖曳</span> : 平移畫布<br>
+      <hr style="border-color:#7f8c8d; margin:8px 0;">
+      <b>物件操控：</b><br>
+      <span>滑鼠拖曳</span> : 移動物件<br>
+      <span>方向鍵</span> : 微調位移 (X/Y)<br>
+      <span>W</span> / <span>S</span> : 放大 / 縮小<br>
+      <span>E</span> / <span>Q</span> : 旋轉<br>
+      <span>Ctrl+C</span> / <span>Ctrl+V</span> : 複製貼上
+    </div>
+
+    <!-- 獨立封裝的序列化區塊 -->
+    <div class="export-group">
+      <button class="action" style="background:#27ae60;" onclick="generateRawData()">📦 打包 JSON 資料</button>
+      <textarea id="code-output" readonly placeholder="此處將顯示可交給 AI 編譯的序列化數據..."></textarea>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div id="canvas-container">
+      <svg id="main-svg" viewBox="0 0 200 240">
+        <g id="layer-back" transform="translate(100, 115)"></g>
+
+        <g class="reference">
+          <path d="M 80 160 C 70 170 60 200 65 240 L 135 240 Z" fill="#a29bfe"></path>
+          <g transform="translate(100, 115)">
+            <path d="M -42 -20 C -42 25 -30 38 0 38 C 30 38 42 25 42 -20 C 42 -50 25 -60 0 -60 C -25 -60 -42 -50 -42 -20 Z" fill="#fde2c4"></path>
+            <path d="M -28 -10 L -16 -10 M 16 -10 L 28 -10" stroke="#bdc3c7" stroke-width="2"></path>
+            <circle cx="-22" cy="8" r="4" fill="#bdc3c7"></circle>
+            <circle cx="22" cy="8" r="4" fill="#bdc3c7"></circle>
+          </g>
+        </g>
+        
+        <g id="layer-front" transform="translate(100, 115)"></g>
+      </svg>
+    </div>
+  </div>
+
+  <script>
+    // ---- 攝影機 (Camera) 引擎 ----
+    const svgMain = document.getElementById('main-svg');
+    let cam = { x: 0, y: 0, w: 200, h: 240 };
+    let isCameraPanning = false;
+    let isSpaceDown = false;
+
+    function applyCamera() {
+      svgMain.setAttribute('viewBox', `${cam.x} ${cam.y} ${cam.w} ${cam.h}`);
+    }
+
+    function setCamera(x, y, w, h) {
+      cam = { x, y, w, h };
+      applyCamera();
+    }
+
+    // 滾輪縮放 (Zoom)
+    svgMain.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = svgMain.getBoundingClientRect();
+      const mx = (e.offsetX / rect.width) * cam.w + cam.x;
+      const my = (e.offsetY / rect.height) * cam.h + cam.y;
+      
+      const zoomFactor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+      cam.w *= zoomFactor;
+      cam.h *= zoomFactor;
+      cam.x = mx - (e.offsetX / rect.width) * cam.w;
+      cam.y = my - (e.offsetY / rect.height) * cam.h;
+      applyCamera();
+    }, { passive: false });
+
+    // ---- 素材與狀態庫 ----
+    const PRIMITIVES = {
+      'hair_circle':  { name: '圓形髮片', path: 'M -25 0 A 25 25 0 1 0 25 0 A 25 25 0 1 0 -25 0', fill: '#2c3e50' },
+      'hair_piece_1': { name: '側髮片', path: 'M -20 0 C -20 -40 20 -40 20 0 C 15 -10 5 -15 0 -20 C -5 -15 -15 -10 -20 0 Z', fill: '#2c3e50' },
+      'hair_tail':    { name: '長後髮', path: 'M -15 -20 C -20 10 -20 60 -10 100 C 0 80 10 20 15 -20 Z', fill: '#2c3e50' },
+      'bangs_curve':  { name: '瀏海(彎)', path: 'M -15 -10 C -15 -30 15 -30 15 -10 C 5 -10 -5 -20 -15 -10 Z', fill: '#2c3e50' },
+      'bangs_sharp':  { name: '瀏海(尖)', path: 'M 0 -25 L 10 5 L -5 -10 Z', fill: '#2c3e50' },
+      
+      'neck_curve':   { name: '項鍊(弧線)', path: 'M -20 0 Q 0 25 20 0', stroke: '#bdc3c7', fill: 'none', strokeW: 2.5 },
+      'chain_link':   { name: '項鍊(鎖鏈)', path: 'M -20 0 Q 0 25 20 0', stroke: '#f1c40f', fill: 'none', strokeW: 4, dash: '5 3' },
+      'jewel':        { name: '菱形寶石', path: 'M 0 -8 L 8 0 L 0 8 L -8 0 Z', fill: '#e74c3c' },
+      
+      'lens_round':   { name: '圓框單片', path: 'M -16 0 A 16 16 0 1 0 16 0 A 16 16 0 1 0 -16 0', stroke: '#f1c40f', fill: 'none', strokeW: 2.5 },
+      'lens_square':  { name: '方框單片', path: 'M -16 -12 L 16 -12 L 16 12 L -16 12 Z', stroke: '#34495e', fill: 'none', strokeW: 2.5 },
+      'bridge':       { name: '鼻樑連接', path: 'M -8 0 Q 0 -5 8 0', stroke: '#bdc3c7', fill: 'none', strokeW: 2 },
+      
+      'star':         { name: '星星', path: 'M 0 -15 L 4.5 -4.5 L 16 -4.5 L 6.5 2.5 L 10 14 L 0 6.5 L -10 14 L -6.5 2.5 L -16 -4.5 L -4.5 -4.5 Z', fill: '#f1c40f' },
+      'crescent':     { name: '彎月', path: 'M -10 -10 A 15 15 0 1 0 10 10 A 12 12 0 1 1 -10 -10 Z', fill: '#f1c40f' },
+      'drop':         { name: '水滴', path: 'M 0 -15 C 10 -5 10 10 0 10 C -10 10 -10 -5 0 -15 Z', fill: '#3498db' }
+    };
+
+    const state = {
+      layers: [], 
+      activeId: null,
+      layerCounter: 0,
+      copiedLayer: null
+    };
+
+    const layerFront = document.getElementById('layer-front');
+    const layerBack = document.getElementById('layer-back');
+    const controls = document.getElementById('transform-controls');
+
+    // 生成素材按鈕
+    const libContainer = document.getElementById('library-container');
+    Object.entries(PRIMITIVES).forEach(([key, data]) => {
+      const btn = document.createElement('button');
+      btn.className = 'lib-btn';
+      btn.textContent = `+ ${data.name}`;
+      btn.onclick = () => { addLayer(key); render(); };
+      libContainer.appendChild(btn);
+    });
+
+    function addLayer(primKey) {
+      const id = `L_${state.layerCounter++}`;
+      state.layers.push({ id, primKey, x: 0, y: 0, scale: 1, rot: 0, z: 'front' });
+      setActive(id);
+    }
+
+    function setActive(id) {
+      state.activeId = id;
+      document.querySelectorAll('.layer-item').forEach(el => {
+        if (el.getAttribute('data-id') === id) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+
+      if (!id) {
+        controls.classList.remove('active');
+        return;
+      }
+      controls.classList.add('active');
+      const layer = state.layers.find(l => l.id === id);
+      
+      document.getElementById('t-x').value = layer.x;
+      document.getElementById('t-y').value = layer.y;
+      document.getElementById('t-scale').value = layer.scale;
+      document.getElementById('t-rot').value = layer.rot;
+      
+      const btnZ = document.getElementById('btn-zindex');
+      btnZ.textContent = layer.z === 'front' ? '層級：臉前 (切換至後)' : '層級：頭後 (切換至前)';
+      btnZ.className = layer.z === 'front' ? 'action warning' : 'action';
+      updateLabels();
+    }
+
+    function updateActiveLayerTransform() {
+      if (!state.activeId) return;
+      const layer = state.layers.find(l => l.id === state.activeId);
+      const g = document.querySelector(`.layer-item[data-id="${state.activeId}"]`);
+      if (g) g.setAttribute('transform', `translate(${layer.x}, ${layer.y}) scale(${layer.scale}) rotate(${layer.rot})`);
+      updateLabels();
+    }
+
+    function updateLabels() {
+      const layer = state.layers.find(l => l.id === state.activeId);
+      if(!layer) return;
+      document.getElementById('val-x').textContent = layer.x;
+      document.getElementById('val-y').textContent = layer.y;
+      document.getElementById('val-scale').textContent = layer.scale.toFixed(2);
+      document.getElementById('val-rot').textContent = layer.rot + '°';
+    }
+
+    ['x', 'y', 'scale', 'rot'].forEach(prop => {
+      document.getElementById(`t-${prop}`).addEventListener('input', (e) => {
+        if (!state.activeId) return;
+        state.layers.find(l => l.id === state.activeId)[prop] = parseFloat(e.target.value);
+        updateActiveLayerTransform();
+      });
+    });
+
+    // ---- 複合滑鼠拖曳引擎 ----
+    let isObjectDragging = false;
+    let dragStartPos = { x: 0, y: 0 };
+    let layerStartPos = { x: 0, y: 0 };
+
+    function getMousePosition(evt) {
+      const CTM = svgMain.getScreenCTM();
+      return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d };
+    }
+
+    svgMain.addEventListener('mousedown', (e) => {
+      if (isSpaceDown || e.button === 1) {
+        isCameraPanning = true;
+        dragStartPos = { x: e.clientX, y: e.clientY };
+        return;
+      }
+
+      let target = e.target;
+      let g = null;
+      while(target && target !== svgMain) {
+        if(target.getAttribute && target.getAttribute('class') && target.getAttribute('class').includes('layer-item')) {
+          g = target; break;
+        }
+        target = target.parentNode;
+      }
+
+      if (g) {
+        const id = g.getAttribute('data-id');
+        setActive(id);
+        isObjectDragging = true;
+        dragStartPos = getMousePosition(e);
+        const layer = state.layers.find(l => l.id === id);
+        layerStartPos = { x: layer.x, y: layer.y };
+      } else {
+        setActive(null);
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isCameraPanning) {
+        const dx = e.clientX - dragStartPos.x;
+        const dy = e.clientY - dragStartPos.y;
+        dragStartPos = { x: e.clientX, y: e.clientY };
+        
+        const rect = svgMain.getBoundingClientRect();
+        cam.x -= dx * (cam.w / rect.width);
+        cam.y -= dy * (cam.h / rect.height);
+        applyCamera();
+        return;
+      }
+
+      if (isObjectDragging && state.activeId) {
+        e.preventDefault();
+        const mousePos = getMousePosition(e);
+        const layer = state.layers.find(l => l.id === state.activeId);
+        layer.x = Math.round(layerStartPos.x + (mousePos.x - dragStartPos.x));
+        layer.y = Math.round(layerStartPos.y + (mousePos.y - dragStartPos.y));
+        
+        document.getElementById('t-x').value = layer.x;
+        document.getElementById('t-y').value = layer.y;
+        updateActiveLayerTransform();
+      }
+    });
+
+    window.addEventListener('mouseup', () => { isObjectDragging = false; isCameraPanning = false; });
+    window.addEventListener('mouseleave', () => { isObjectDragging = false; isCameraPanning = false; });
+
+    // ---- 高併發鍵盤快捷鍵 ----
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      
+      if (e.key === ' ') {
+        e.preventDefault();
+        isSpaceDown = true;
+        svgMain.classList.add('panning');
+        return;
+      }
+      
+      if (e.ctrlKey || e.metaKey) {
+        const activeLayer = state.layers.find(l => l.id === state.activeId);
+        if (e.key.toLowerCase() === 'c' && activeLayer) {
+          state.copiedLayer = JSON.parse(JSON.stringify(activeLayer));
+        }
+        if (e.key.toLowerCase() === 'v' && state.copiedLayer) {
+          const newLayer = JSON.parse(JSON.stringify(state.copiedLayer));
+          newLayer.id = `L_${state.layerCounter++}`;
+          newLayer.x += 10; newLayer.y += 10;
+          state.layers.push(newLayer);
+          render(); setActive(newLayer.id);
+        }
+        return;
+      }
+
+      const layer = state.layers.find(l => l.id === state.activeId);
+      if (!layer) return;
+
+      switch(e.key) {
+        case 'ArrowUp':    layer.y -= 1; e.preventDefault(); break;
+        case 'ArrowDown':  layer.y += 1; e.preventDefault(); break;
+        case 'ArrowLeft':  layer.x -= 1; e.preventDefault(); break;
+        case 'ArrowRight': layer.x += 1; e.preventDefault(); break;
+        case 'w': case 'W': layer.scale = +(layer.scale + 0.05).toFixed(2); break;
+        case 's': case 'S': layer.scale = Math.max(0.1, +(layer.scale - 0.05).toFixed(2)); break;
+        case 'e': case 'E': layer.rot = (layer.rot + 5) % 360; break;
+        case 'q': case 'Q': layer.rot = (layer.rot - 5) % 360; break;
+      }
+      
+      document.getElementById('t-x').value = layer.x;
+      document.getElementById('t-y').value = layer.y;
+      document.getElementById('t-scale').value = layer.scale;
+      document.getElementById('t-rot').value = layer.rot;
+      updateActiveLayerTransform();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === ' ') {
+        isSpaceDown = false;
+        svgMain.classList.remove('panning');
+      }
+    });
+
+    // ---- 圖層操作 ----
+    function toggleZIndex() {
+      if (!state.activeId) return;
+      const layer = state.layers.find(l => l.id === state.activeId);
+      layer.z = layer.z === 'front' ? 'back' : 'front';
+      render(); setActive(state.activeId);
+    }
+    function moveLayer(dir) {
+      if (!state.activeId) return;
+      const idx = state.layers.findIndex(l => l.id === state.activeId);
+      const newIdx = idx + dir;
+      if (newIdx >= 0 && newIdx < state.layers.length) {
+        const temp = state.layers[idx];
+        state.layers[idx] = state.layers[newIdx];
+        state.layers[newIdx] = temp;
+        render(); setActive(state.activeId);
+      }
+    }
+    function deleteActive() {
+      if (!state.activeId) return;
+      state.layers = state.layers.filter(l => l.id !== state.activeId);
+      render(); setActive(null);
+    }
+
+    function render() {
+      layerFront.innerHTML = '';
+      layerBack.innerHTML = '';
+      
+      state.layers.forEach(layer => {
+        const prim = PRIMITIVES[layer.primKey];
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        
+        g.setAttribute('class', `layer-item ${state.activeId === layer.id ? 'selected' : ''}`);
+        g.setAttribute('data-id', layer.id);
+        g.setAttribute('transform', `translate(${layer.x}, ${layer.y}) scale(${layer.scale}) rotate(${layer.rot})`);
+
+        if (prim.fill === 'none') {
+          const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          ghost.setAttribute('d', prim.path);
+          ghost.setAttribute('stroke', 'transparent');
+          ghost.setAttribute('stroke-width', '15');
+          ghost.setAttribute('fill', 'transparent');
+          ghost.setAttribute('class', 'ghost');
+          ghost.setAttribute('pointer-events', 'stroke');
+          g.appendChild(ghost);
+        }
+
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', prim.path);
+        if (prim.fill) p.setAttribute('fill', prim.fill);
+        if (prim.stroke) p.setAttribute('stroke', prim.stroke);
+        if (prim.strokeW) p.setAttribute('stroke-width', prim.strokeW);
+        if (prim.dash) p.setAttribute('stroke-dasharray', prim.dash);
+        g.appendChild(p);
+        
+        if (layer.z === 'back') layerBack.appendChild(g);
+        else layerFront.appendChild(g);
+      });
+    }
+
+    function generateRawData() {
+      const payload = { back: [], front: [] };
+      state.layers.forEach(l => {
+        const p = PRIMITIVES[l.primKey];
+        const data = { part: p.name, d: p.path, transform: `translate(${l.x}, ${l.y}) scale(${l.scale}) rotate(${l.rot})` };
+        payload[l.z].push(data);
+      });
+      document.getElementById('code-output').value = JSON.stringify(payload, null, 2);
+    }
+  </script>
+</body>
+</html>
