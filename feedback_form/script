@@ -1,0 +1,68 @@
+/* ====================================
+   金大資工新生指南 - 互動腳本
+   功能：
+   1. 捲動時導覽列陰影
+   2. 手機選單切換
+   3. 平滑捲動錨點 (offset for fixed nav)
+   ==================================== */
+
+(function () {
+  'use strict';
+
+  const navbar     = document.getElementById('navbar');
+  const navToggle  = document.getElementById('navToggle');
+  const navLinks   = document.querySelector('.nav-links');
+
+  // 1. 捲動時為導覽列加上陰影
+  function onScroll() {
+    if (window.scrollY > 8) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // 2. 手機選單開關
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', function () {
+      navLinks.classList.toggle('open');
+    });
+
+    // 點選單項目後自動收合
+    navLinks.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        navLinks.classList.remove('open');
+      });
+    });
+  }
+
+  // 3. 處理錨點捲動的 offset (避免被固定導覽列遮住)
+  document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href');
+      if (targetId === '#' || targetId.length < 2) return;
+
+      const target = document.querySelector(targetId);
+      if (!target) return;
+
+      e.preventDefault();
+      const navHeight = navbar.offsetHeight || 70;
+      const top = target.getBoundingClientRect().top + window.scrollY - navHeight + 1;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+  });
+
+  // 4. FAQ：點開一張時自動收合其他已開啟的（同區塊內）
+  document.querySelectorAll('.faq').forEach(function (faq) {
+    faq.addEventListener('toggle', function () {
+      if (!faq.open) return;
+      const section = faq.closest('.grid') || faq.closest('section');
+      if (!section) return;
+      section.querySelectorAll('.faq[open]').forEach(function (other) {
+        if (other !== faq) other.open = false;
+      });
+    });
+  });
+})();
