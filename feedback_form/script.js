@@ -81,7 +81,7 @@
       'check-enrollment': '學籍記載表',
       'check-idcard': '身分證',
       'check-stamp': '個人印章',
-      'check-photo': '2 吋大頭照 2 張',
+      'check-photo': '2 吋大頭照',
       'check-money': '50 元（換發身分證規費）',
       'checklist-done': '你準備好了！',
       'checklist-done-sub': '記得早點出門，路上小心！',
