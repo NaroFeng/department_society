@@ -23,6 +23,7 @@
 
       // 導覽列
       'brand': '金大資工新生指南',
+      'nav-schedule': '新生行程',
       'nav-policy': '優惠政策',
       'nav-association': '系學會',
       'nav-clubs': '熱門社團',
@@ -39,6 +40,33 @@
       'hero-pill-2': '🤝 破冰活動',
       'hero-pill-3': '🎯 社團精選',
       'hero-pill-4': '🍜 在地生活',
+
+      // 行程
+      'schedule-tag': 'Section 01',
+      'schedule-title': '新生入學輔導行程 📅',
+      'schedule-desc': '115 學年度新生入學輔導暨生活輔導教育課程',
+      'schedule-day1': '第1日',
+      'schedule-day2': '第2日',
+      'schedule-dept': '資訊工程學系（乙B）',
+      'meta-host': '主辦',
+      'meta-location': '地點',
+      'meta-target': '對象',
+      'event-now-badge': '🟢 進行中',
+      'type-ceremony': '始業',
+      'type-report': '報告',
+      'type-performance': '表演',
+      'type-lecture': '宣導',
+      'type-activity': '活動',
+      'type-workshop': '示範',
+      'type-admin': '行政',
+      'type-break': '休息',
+      'type-tbd': '待定',
+      'time-tbd': '待定',
+      'status-not-today': '📅 這一天不是行程當日',
+      'status-now': '🟢 正在進行',
+      'status-before': '⏰ 距離第一個活動還有',
+      'status-finished': '🌙 今日行程已結束',
+      'status-min': '分鐘',
 
       // 優惠政策
       'policy-tag': 'Section 01',
@@ -179,6 +207,7 @@
 
       // Nav
       'brand': 'NQU CS Guide',
+      'nav-schedule': 'Schedule',
       'nav-policy': 'Benefits',
       'nav-association': 'Association',
       'nav-clubs': 'Clubs',
@@ -195,6 +224,33 @@
       'hero-pill-2': '🤝 Ice-breaking',
       'hero-pill-3': '🎯 Club Picks',
       'hero-pill-4': '🍜 Local Life',
+
+      // Schedule
+      'schedule-tag': 'Section 01',
+      'schedule-title': 'Orientation Schedule 📅',
+      'schedule-desc': 'Academic Year 115 Freshman Orientation & Life Guidance Curriculum',
+      'schedule-day1': 'Day 1',
+      'schedule-day2': 'Day 2',
+      'schedule-dept': 'Dept. of CS (Group B)',
+      'meta-host': 'Host',
+      'meta-location': 'Location',
+      'meta-target': 'Target',
+      'event-now-badge': '🟢 Happening Now',
+      'type-ceremony': 'Ceremony',
+      'type-report': 'Report',
+      'type-performance': 'Show',
+      'type-lecture': 'Lecture',
+      'type-activity': 'Activity',
+      'type-workshop': 'Workshop',
+      'type-admin': 'Admin',
+      'type-break': 'Break',
+      'type-tbd': 'TBD',
+      'time-tbd': 'TBD',
+      'status-not-today': '📅 Not an orientation day',
+      'status-now': '🟢 Happening now',
+      'status-before': '⏰ Starts in',
+      'status-finished': '🌙 Today\'s schedule is finished',
+      'status-min': 'min',
 
       // Benefits
       'policy-tag': 'Section 01',
@@ -332,8 +388,11 @@
   /* ---------------------------------------------
      核心：切換語言
      --------------------------------------------- */
+  let currentLang = 'zh';
+
   function applyLang(lang) {
     if (!i18n[lang]) return;
+    currentLang = lang;
 
     const dict = i18n[lang];
     const html = document.documentElement;
@@ -439,4 +498,255 @@
     savedLang = browserLang.startsWith('zh') ? 'zh' : 'en';
   }
   applyLang(savedLang);
+
+  /* ============================================
+     新生入學輔導行程
+     ============================================ */
+
+  // 統一格式：兩天行程（已將 Day1 的 `item` 欄位捨棄，改用陣列順序；
+  // Day2 的 `department` 欄位為選填）
+  const SCHEDULE = [
+    {
+      id: 'day1',
+      date: '2026-09-03',
+      displayDate: '9/3',
+      weekday: '四',
+      events: [
+        { time_start: '07:40', time_end: '08:00', content: '到 319 吃早餐',
+          host: null, location: '理工大樓 E319 教室', target: '新生', type: 'admin' },
+        { time_start: '09:10', time_end: '09:30', content: '始業式',
+          host: '學務處/校長', location: '體育館', target: '全體新生', type: 'ceremony' },
+        { time_start: '09:30', time_end: '09:40', content: '全體合照',
+          host: null, location: '體育館', target: '全體新生', type: 'ceremony' },
+        { time_start: '09:40', time_end: '10:25', content: '各處室工作報告 1',
+          host: '生輔組 / 教務處、總務處、計網中心、圖書館', location: '體育館', target: '全體新生', type: 'report' },
+        { time_start: '10:25', time_end: '10:35', content: '社團表演',
+          host: '社長及副社長', location: '體育館', target: '全體新生', type: 'performance' },
+        { time_start: '10:35', time_end: '10:45', content: '休息',
+          host: null, location: '體育館', target: '全體新生', type: 'break' },
+        { time_start: '10:45', time_end: '11:25', content: '各處室工作報告 2',
+          host: '生輔組 / 研發處、國際處、體育室、通識中心、就輔中心', location: '體育館', target: '全體新生', type: 'report' },
+        { time_start: '11:25', time_end: '11:35', content: '社團表演',
+          host: '社長及副社長', location: '體育館', target: '全體新生', type: 'performance' },
+        { time_start: '11:35', time_end: '12:00', content: '各處室工作報告 3',
+          host: '生輔組 / 學務處', location: '體育館', target: '全體新生', type: 'report' },
+        { time_start: '12:00', time_end: '13:30', content: '午餐 / 休息',
+          host: null, location: '理工大樓 E319 教室', target: '新生', type: 'break' },
+        { time_start: '13:30', time_end: '14:20', content: '系主任 & 導師時間',
+          host: '系主任 & 導師', location: '理工大樓 E319 教室', target: '新生', type: 'lecture' },
+        { time_start: '14:30', time_end: '15:20', content: '交通安全和反詐騙宣導',
+          host: '軍訓室 / 金門交通隊、刑警隊、郵局', location: '體育館', target: '全體新生', type: 'lecture' },
+        { time_start: '15:30', time_end: '17:20', content: '教育宣導定向闖關團隊建構活動',
+          host: '學務處', location: '各定點', target: '全體新生', type: 'activity' }
+      ]
+    },
+    {
+      id: 'day2',
+      date: '2026-09-04',
+      displayDate: '9/4',
+      weekday: '五',
+      department: '資訊工程學系（乙B）',
+      events: [
+        { time_start: null, time_end: null, content: '吃早餐',
+          host: null, location: '待公布', target: '新生',
+          type: 'tbd', isTbd: true,
+          tbdNote: { zh: '⏰ 時間待定，請隨時關注更新', en: '⏰ Time TBD, check back later' } },
+        { time_start: '08:30', time_end: '10:00', content: '「愛自己，從健康選擇開始—全面性教育與菸害防制」宣導講座',
+          host: '身心健康中心衛保組 / 教育部部訂講師 根秀卿老師', location: '體育館', target: '全體新生', type: 'lecture' },
+        { time_start: '10:10', time_end: '11:00', content: '填寫（輸入）資料和 UCAN 問卷（乙B、乙C）',
+          host: '學務處 / 新生輔導員', location: '101 電腦教室', target: '資工系', type: 'admin' },
+        { time_start: '11:10', time_end: '12:00', content: '身心健康中心宣導（乙B、乙C）',
+          host: '身心健康中心 / 金門縣衛生局、新生輔導員', location: '圖資大樓楊肅斌演講廳', target: '資工系、華文、應英、國際、土木', type: 'lecture' },
+        { time_start: '13:30', time_end: '15:20', content: 'CPR、AED 示範演練（乙）',
+          host: '身心健康中心 / 金寧消防隊、新生輔導員', location: '體育館', target: '電機甲、電機乙、都景、資工、華文、應英、國際、土木、運休、工管', type: 'workshop' },
+        { time_start: '15:30', time_end: '17:20', content: '繳交遷戶籍資料（乙）',
+          host: '學務處 / 新生輔導員', location: '生活輔導組', target: '電機甲～工管', type: 'admin' },
+        { time_start: '15:30', time_end: '17:20', content: '選購寢具及日常生活用品（乙）',
+          host: '新生輔導員', location: '圓樓一樓外圍', target: '電機甲～工管', type: 'admin' }
+      ]
+    }
+  ];
+
+  // 把時字串 "HH:MM" 轉成總分鐘數
+  function timeToMin(t) {
+    const parts = t.split(':').map(Number);
+    return parts[0] * 60 + parts[1];
+  }
+
+  // 取得某天的「現在進行中」事件
+  function getCurrentEvent(day) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (todayStr !== day.date) return null;
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    return day.events.find(function (e) {
+      if (e.isTbd || !e.time_start) return false;     // 跳過 TBD
+      const s = timeToMin(e.time_start);
+      const en = timeToMin(e.time_end);
+      return nowMin >= s && nowMin < en;
+    }) || null;
+  }
+
+  // 簡易 HTML escape
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  // 渲染單日行程
+  function renderDay(dayIndex) {
+    const day = SCHEDULE[dayIndex];
+    const container = document.getElementById('timelineDay' + (dayIndex + 1));
+    if (!container) return;
+
+    const dict = i18n[currentLang];
+
+    container.innerHTML = day.events.map(function (ev, idx) {
+      const isCurrent = (ev === getCurrentEvent(day));
+      const nowBadge = isCurrent
+        ? '<span class="event-now-badge">' + escapeHtml(dict['event-now-badge']) + '</span>' : '';
+
+      // 時間顯示：TBD 事件用待定標籤
+      const timeBlock = ev.isTbd
+        ? '<span class="time-tbd">⏰ ' + escapeHtml(dict['time-tbd'] || '待定') + '</span>'
+        : '<span class="time-start">' + ev.time_start + '</span>' +
+          '<span class="time-end">~ ' + ev.time_end + '</span>';
+
+      // TBD 事件使用備註欄位（支援 i18n）
+      const hostBlock = ev.isTbd && ev.tbdNote
+        ? '<span class="tbd-note">' + escapeHtml(ev.tbdNote[currentLang] || ev.tbdNote.zh) + '</span>'
+        : (ev.host
+            ? '<div class="meta-item"><span class="meta-icon">🎤</span><span><strong>' +
+              dict['meta-host'] + '：</strong>' + escapeHtml(ev.host) + '</span></div>'
+            : '');
+
+      return '' +
+        '<div class="event event-' + ev.type + (isCurrent ? ' event-current' : '') +
+        '" data-event-id="' + dayIndex + '-' + idx + '">' +
+          '<div class="event-time">' + timeBlock + '</div>' +
+          '<div class="event-content">' +
+            nowBadge +
+            '<h4 class="event-title">' + escapeHtml(ev.content) + '</h4>' +
+            '<div class="event-meta">' +
+              hostBlock +
+              '<div class="meta-item"><span class="meta-icon">📍</span><span><strong>' +
+                dict['meta-location'] + '：</strong>' + escapeHtml(ev.location) + '</span></div>' +
+              '<div class="meta-item"><span class="meta-icon">👥</span><span><strong>' +
+                dict['meta-target'] + '：</strong>' + escapeHtml(ev.target) + '</span></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  // 切換日
+  let activeDayIndex = 0;
+  function switchDay(idx) {
+    activeDayIndex = idx;
+    document.querySelectorAll('.schedule-tab').forEach(function (tab, i) {
+      const active = i === idx;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('.timeline').forEach(function (tl, i) {
+      tl.hidden = i !== idx;
+    });
+
+    // 系所標籤
+    const deptEl = document.getElementById('scheduleDepartment');
+    if (deptEl) {
+      if (SCHEDULE[idx].department) {
+        deptEl.textContent = SCHEDULE[idx].department;
+        deptEl.hidden = false;
+      } else {
+        deptEl.hidden = true;
+      }
+    }
+
+    updateStatus();
+  }
+
+  // 狀態列
+  function updateStatus() {
+    const statusEl = document.getElementById('scheduleStatus');
+    if (!statusEl) return;
+    const day = SCHEDULE[activeDayIndex];
+    const dict = i18n[currentLang];
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    statusEl.className = 'schedule-status';
+
+    if (todayStr !== day.date) {
+      statusEl.classList.add('future');
+      statusEl.textContent = dict['status-not-today'];
+      return;
+    }
+
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    // 第一個 / 最後一個有時間的事件（跳過 TBD）
+    const timedEvents = day.events.filter(function (e) { return !e.isTbd && e.time_start; });
+    const firstStart = timedEvents.length ? timeToMin(timedEvents[0].time_start) : 0;
+    const lastEnd = timedEvents.length ? timeToMin(timedEvents[timedEvents.length - 1].time_end) : 0;
+    const current = getCurrentEvent(day);
+
+    if (current) {
+      statusEl.classList.add('now');
+      statusEl.textContent = dict['status-now'] + '：' + current.content +
+        ' (' + current.time_start + '–' + current.time_end + ')';
+    } else if (nowMin < firstStart) {
+      const diff = firstStart - nowMin;
+      statusEl.classList.add('future');
+      statusEl.textContent = dict['status-before'] + ' ' + diff + ' ' + dict['status-min'] +
+        '（' + day.events[0].time_start + ' ' + day.events[0].content + '）';
+    } else if (nowMin >= lastEnd) {
+      statusEl.classList.add('past');
+      statusEl.textContent = dict['status-finished'];
+    } else {
+      statusEl.classList.add('future');
+      statusEl.textContent = (currentLang === 'zh')
+        ? '☕ 活動空檔，可自由走動'
+        : '☕ Free time — take a break';
+    }
+  }
+
+  // 初始化行程
+  function initSchedule() {
+    if (!document.getElementById('schedule')) return;
+
+    renderDay(0);
+    renderDay(1);
+
+    document.querySelectorAll('.schedule-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        switchDay(Number(tab.dataset.day));
+      });
+    });
+
+    // 今天若是 9/3 或 9/4，自動切到該日
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayIdx = SCHEDULE.findIndex(function (d) { return d.date === todayStr; });
+    switchDay(todayIdx >= 0 ? todayIdx : 0);
+
+    setInterval(updateStatus, 60000);
+  }
+
+  // 語言切換時要重新渲染
+  function reRenderSchedule() {
+    if (!document.getElementById('schedule')) return;
+    renderDay(0);
+    renderDay(1);
+    updateStatus();
+  }
+
+  // hook 進 applyLang
+  const _origApplyLang = applyLang;
+  applyLang = function (lang) {
+    _origApplyLang(lang);
+    reRenderSchedule();
+  };
+
+  // 啟動
+  initSchedule();
 })();
