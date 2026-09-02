@@ -892,6 +892,319 @@ img, svg { max-width: 100%; display: block; }
   font-size: 0.95rem;
 }
 
+/* ---------- 行程時間軸 ---------- */
+.section-schedule {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0F8FF 100%);
+}
+
+.schedule-tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.schedule-tab {
+  background: var(--white);
+  border: 2px solid var(--blue-100);
+  border-radius: var(--radius-md);
+  padding: 12px 22px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all .2s ease;
+  font-family: inherit;
+  min-width: 140px;
+  min-height: 60px;
+}
+.schedule-tab:hover {
+  border-color: var(--blue-300);
+  transform: translateY(-2px);
+}
+.schedule-tab.active {
+  background: var(--gradient-main);
+  border-color: transparent;
+  color: var(--white);
+  box-shadow: 0 8px 20px rgba(33,150,243,0.30);
+}
+.schedule-tab .tab-day {
+  font-size: 0.92rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.schedule-tab .tab-date {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.schedule-tab.active .tab-day { opacity: 0.95; }
+
+.schedule-department {
+  text-align: center;
+  margin: 0 auto 24px;
+  display: inline-block;
+  background: linear-gradient(135deg, #FFE5E0 0%, #FFD0CC 100%);
+  color: var(--coral-600);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-sm);
+}
+#scheduleDepartment[hidden] { display: none; }
+#scheduleDepartment:not([hidden]) {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 24px;
+}
+
+/* ---------- 時間軸主體 ---------- */
+.timeline {
+  position: relative;
+  padding: 8px 0 8px 32px;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 24px;
+  width: 2px;
+  background: linear-gradient(180deg,
+    var(--blue-300) 0%,
+    var(--mint-300) 30%,
+    var(--coral-300) 60%,
+    var(--violet-300) 100%);
+  border-radius: 2px;
+}
+
+.event {
+  position: relative;
+  margin-bottom: 16px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--blue-300);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.event::before {
+  content: "";
+  position: absolute;
+  left: -25px;
+  top: 22px;
+  width: 14px;
+  height: 14px;
+  background: var(--white);
+  border: 3px solid var(--blue-300);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(79,195,247,0.10);
+}
+.event:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 各類型配色 */
+.event-ceremony    { border-left-color: var(--blue-500);   }
+.event-ceremony::before    { border-color: var(--blue-500); background: var(--blue-50); }
+.event-report      { border-left-color: var(--mint-500);   }
+.event-report::before      { border-color: var(--mint-500); background: #DEF7EC; }
+.event-performance { border-left-color: var(--coral-500);  }
+.event-performance::before { border-color: var(--coral-500); background: #FFE5E0; }
+.event-lecture     { border-left-color: var(--violet-500); }
+.event-lecture::before     { border-color: var(--violet-500); background: #F0E7FF; }
+.event-activity    { border-left-color: #38BDF8; }
+.event-activity::before    { border-color: #38BDF8; background: #E0F2FE; }
+.event-workshop    { border-left-color: #EC4899; }
+.event-workshop::before    { border-color: #EC4899; background: #FCE7F3; }
+.event-admin       { border-left-color: var(--yellow-500); }
+.event-admin::before       { border-color: var(--yellow-500); background: #FEF3C7; }
+
+/* 休息 / 午餐 */
+.event-break {
+  border-left-color: var(--ink-300);
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  border-style: dashed;
+  opacity: 0.85;
+}
+.event-break::before {
+  border-color: var(--ink-500);
+  background: var(--ink-100);
+  border-style: dashed;
+}
+.event-break .event-title {
+  color: var(--ink-700);
+  font-weight: 600;
+}
+
+/* 待定 / TBD 事件 */
+.event-tbd {
+  border-left-color: var(--ink-300);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(100,116,139,0.04),
+      rgba(100,116,139,0.04) 8px,
+      rgba(100,116,139,0.08) 8px,
+      rgba(100,116,139,0.08) 16px
+    ),
+    var(--white);
+  border-style: dashed;
+}
+.event-tbd::before {
+  border-color: var(--ink-500);
+  border-style: dashed;
+  background: var(--white);
+}
+.event-tbd .event-title {
+  color: var(--ink-700);
+  font-style: italic;
+}
+.time-tbd {
+  display: inline-block;
+  background: var(--ink-100);
+  color: var(--ink-700);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: 1px dashed var(--ink-300);
+}
+.tbd-note {
+  display: inline-block;
+  color: var(--ink-700);
+  font-size: 0.88rem;
+  font-style: italic;
+  background: rgba(255, 247, 230, 0.6);
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* 進行中 */
+.event-current {
+  background: linear-gradient(135deg, #FFF7E6 0%, #FFE5E0 100%);
+  box-shadow: 0 8px 24px rgba(255,107,107,0.25), 0 0 0 2px var(--coral-500);
+  transform: translateX(4px);
+  animation: currentPulse 2s ease-in-out infinite;
+}
+@keyframes currentPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(255,107,107,0.25), 0 0 0 2px var(--coral-500); }
+  50%      { box-shadow: 0 12px 32px rgba(255,107,107,0.40), 0 0 0 4px var(--coral-500); }
+}
+
+.event-now-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--coral-500);
+  color: var(--white);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  animation: blinkDot 1.4s ease-in-out infinite;
+}
+@keyframes blinkDot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* 卡片內部排版 */
+.event-time {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.time-start {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ink-900);
+  letter-spacing: 0.02em;
+}
+.time-end {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85rem;
+  color: var(--ink-500);
+}
+
+.event-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.88rem;
+  color: var(--ink-700);
+}
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.meta-icon {
+  font-size: 0.95rem;
+}
+
+/* 狀態列 */
+.schedule-status {
+  margin-top: 20px;
+  padding: 14px 20px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink-700);
+  border: 1px dashed var(--blue-100);
+}
+.schedule-status.now {
+  background: linear-gradient(135deg, #FFF7E6 0%, #FFE5E0 100%);
+  border: 1px solid var(--coral-500);
+  color: var(--coral-600);
+}
+.schedule-status.future {
+  background: linear-gradient(135deg, #E0F4FF 0%, #DEF7EC 100%);
+  border: 1px solid var(--blue-300);
+  color: var(--blue-700);
+}
+.schedule-status.past {
+  background: var(--ink-100);
+  border: 1px solid var(--ink-300);
+  color: var(--ink-500);
+}
+.schedule-status[hidden] { display: none; }
+
+/* 手機版時間軸調整 */
+@media (max-width: 560px) {
+  .timeline { padding-left: 24px; }
+  .timeline::before { left: 7px; }
+  .event { padding: 14px 16px; }
+  .event::before { left: -21px; width: 12px; height: 12px; }
+  .schedule-tab {
+    padding: 10px 16px;
+    min-width: 130px;
+    flex: 1;
+  }
+  .schedule-tab .tab-date { font-size: 1rem; }
+  .event-time { flex-direction: column; gap: 0; }
+  .time-start { font-size: 1rem; }
+}
+
 /* ---------- 報到表單按鈕（Hero 脈動效果） ---------- */
 .btn-pulse {
   animation: pulse 2.4s ease-in-out infinite;
