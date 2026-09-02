@@ -68,6 +68,25 @@
       'status-finished': '🌙 今日行程已結束',
       'status-min': '分鐘',
 
+      // 攜帶物品清單
+      'checklist-title': '攜帶物品清單',
+      'checklist-sub': '出門前確認一下，別漏了！',
+      'checklist-cat1': '日常用品',
+      'checklist-cat2': '報到文件',
+      'check-bottle': '水壺',
+      'check-stationery': '文具',
+      'check-seal': '私人木頭章',
+      'check-shoes': '布鞋（建議穿著）',
+      'check-diploma': '畢業證書或修業證明',
+      'check-enrollment': '學籍記載表',
+      'check-idcard': '身分證',
+      'check-stamp': '個人印章',
+      'check-photo': '2 吋大頭照',
+      'check-money': '50 元（換發身分證規費）',
+      'checklist-done': '你準備好了！',
+      'checklist-done-sub': '記得早點出門，路上小心！',
+      'checklist-reset': '🔄 重新整理',
+
       // 優惠政策
       'policy-tag': 'Section 01',
       'policy-title': '新生優惠政策 💸',
@@ -251,6 +270,25 @@
       'status-before': '⏰ Starts in',
       'status-finished': '🌙 Today\'s schedule is finished',
       'status-min': 'min',
+
+      // Checklist
+      'checklist-title': 'Packing Checklist',
+      'checklist-sub': 'Check before heading out — don\'t forget anything!',
+      'checklist-cat1': 'Daily Items',
+      'checklist-cat2': 'Registration Documents',
+      'check-bottle': 'Water bottle',
+      'check-stationery': 'Stationery',
+      'check-seal': 'Personal wooden seal',
+      'check-shoes': 'Casual shoes (recommended)',
+      'check-diploma': 'Diploma / Certificate of Attendance',
+      'check-enrollment': 'Student Status Form',
+      'check-idcard': 'ID Card',
+      'check-stamp': 'Personal seal',
+      'check-photo': '2-inch ID photo',
+      'check-money': 'NT$50 (ID re-issuance fee)',
+      'checklist-done': 'You\'re all set!',
+      'checklist-done-sub': 'Leave early and travel safe!',
+      'checklist-reset': '🔄 Reset',
 
       // Benefits
       'policy-tag': 'Section 01',
@@ -749,4 +787,94 @@
 
   // 啟動
   initSchedule();
+
+  /* ============================================
+     攜帶物品浮動清單
+     ============================================ */
+  const CHECKLIST_KEY = 'nqu-checklist-v1';
+  const CHECKLIST_ITEMS = [
+    'bottle', 'stationery', 'seal', 'shoes',
+    'diploma', 'enrollment', 'idcard', 'stamp', 'photo', 'money'
+  ];
+
+  function loadChecklist() {
+    try {
+      const saved = localStorage.getItem(CHECKLIST_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveChecklist(state) {
+    try { localStorage.setItem(CHECKLIST_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function updateChecklistProgress() {
+    const state = loadChecklist();
+    const checked = CHECKLIST_ITEMS.filter(function (k) { return state[k]; }).length;
+    const total = CHECKLIST_ITEMS.length;
+    const pct = Math.round(checked / total * 100);
+
+    document.querySelectorAll('.checklist-panel input[type="checkbox"]').forEach(function (cb) {
+      cb.checked = !!state[cb.dataset.item];
+    });
+
+    const fill = document.getElementById('progressFill');
+    const text = document.getElementById('progressText');
+    const badge = document.getElementById('fabBadge');
+    const celeb = document.getElementById('celebration');
+
+    if (fill) fill.style.width = pct + '%';
+    if (text) text.textContent = checked + ' / ' + total;
+    if (badge) {
+      badge.textContent = checked;
+      badge.classList.toggle('complete', checked === total);
+    }
+    if (celeb) celeb.hidden = (checked !== total);
+  }
+
+  function initChecklist() {
+    const fab     = document.getElementById('checklistFab');
+    const panel   = document.getElementById('checklistPanel');
+    const close   = document.getElementById('checklistClose');
+    const overlay = document.getElementById('checklistOverlay');
+    const reset   = document.getElementById('checklistReset');
+
+    if (!fab || !panel) return;
+
+    // 初始狀態
+    updateChecklistProgress();
+
+    // 手機 / 平板：FAB 點擊開關
+    function openPanel()  { panel.classList.add('open');    overlay.hidden = false; }
+    function closePanel() { panel.classList.remove('open'); overlay.hidden = true;  }
+
+    fab.addEventListener('click', function () {
+      if (panel.classList.contains('open')) closePanel();
+      else openPanel();
+    });
+    if (close)   close.addEventListener('click', closePanel);
+    if (overlay) overlay.addEventListener('click', closePanel);
+
+    // 勾選事件
+    document.querySelectorAll('.checklist-panel input[type="checkbox"]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        const state = loadChecklist();
+        state[cb.dataset.item] = cb.checked;
+        saveChecklist(state);
+        updateChecklistProgress();
+      });
+    });
+
+    // 重置
+    if (reset) {
+      reset.addEventListener('click', function () {
+        if (confirm(currentLang === 'zh' ? '確定要清除所有勾選嗎？' : 'Clear all checks?')) {
+          saveChecklist({});
+          updateChecklistProgress();
+        }
+      });
+    }
+  }
+
+  initChecklist();
 })();
