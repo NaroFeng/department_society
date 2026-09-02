@@ -17,6 +17,7 @@
         <span class="brand-text" data-i18n="brand">金大資工新生指南</span>
       </a>
       <nav class="nav-links">
+        <a href="#schedule" data-i18n="nav-schedule">新生行程</a>
         <a href="#policy" data-i18n="nav-policy">優惠政策</a>
         <a href="#association" data-i18n="nav-association">系學會</a>
         <a href="#clubs" data-i18n="nav-clubs">熱門社團</a>
@@ -64,7 +65,36 @@
     </div>
   </section>
 
-  <!-- ============== 1. 優惠政策 ============== -->
+  <!-- ============== 1. 新生入學輔導行程 ============== -->
+  <section class="section section-schedule" id="schedule">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag" data-i18n="schedule-tag">Section 01</span>
+        <h2 class="section-title" data-i18n="schedule-title">新生入學輔導行程 📅</h2>
+        <p class="section-desc" data-i18n="schedule-desc">115 學年度新生入學輔導暨生活輔導教育課程</p>
+      </div>
+
+      <div class="schedule-tabs" role="tablist">
+        <button class="schedule-tab active" data-day="0" type="button" role="tab" aria-selected="true">
+          <span class="tab-day" data-i18n="schedule-day1">第1日</span>
+          <span class="tab-date">9/3（四）</span>
+        </button>
+        <button class="schedule-tab" data-day="1" type="button" role="tab" aria-selected="false">
+          <span class="tab-day" data-i18n="schedule-day2">第2日</span>
+          <span class="tab-date">9/4（五）</span>
+        </button>
+      </div>
+
+      <div class="schedule-department" id="scheduleDepartment" hidden></div>
+
+      <div class="timeline" id="timelineDay1"></div>
+      <div class="timeline" id="timelineDay2" hidden></div>
+
+      <div class="schedule-status" id="scheduleStatus"></div>
+    </div>
+  </section>
+
+  <!-- ============== 2. 優惠政策 ============== -->
   <section class="section section-policy" id="policy">
     <div class="container">
       <div class="section-head">
