@@ -436,6 +436,65 @@
     </div>
   </footer>
 
+  <!-- ============== 攜帶物品浮動清單 ============== -->
+  <button class="checklist-fab" id="checklistFab" type="button" aria-label="攜帶物品清單">
+    <span class="fab-icon">🎒</span>
+    <span class="fab-badge" id="fabBadge">0</span>
+  </button>
+
+  <aside class="checklist-panel" id="checklistPanel" aria-hidden="false">
+    <div class="checklist-header">
+      <div>
+        <h3 data-i18n="checklist-title">攜帶物品清單</h3>
+        <p class="checklist-sub" data-i18n="checklist-sub">出門前確認一下，別漏了！</p>
+      </div>
+      <button class="checklist-close" id="checklistClose" type="button" aria-label="收合">×</button>
+    </div>
+
+    <div class="checklist-progress">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <span class="progress-text" id="progressText">0 / 10</span>
+    </div>
+
+    <div class="checklist-groups">
+      <div class="checklist-group">
+        <h4>🎒 <span data-i18n="checklist-cat1">日常用品</span></h4>
+        <ul class="checklist-list">
+          <li><label class="checklist-item"><input type="checkbox" data-item="bottle" /><span class="check-icon">💧</span><span class="check-label" data-i18n="check-bottle">水壺</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="stationery" /><span class="check-icon">✏️</span><span class="check-label" data-i18n="check-stationery">文具</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="seal" /><span class="check-icon">🪵</span><span class="check-label" data-i18n="check-seal">私人木頭章</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="shoes" /><span class="check-icon">👟</span><span class="check-label" data-i18n="check-shoes">布鞋（建議穿著）</span></label></li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h4>📄 <span data-i18n="checklist-cat2">報到文件</span></h4>
+        <ul class="checklist-list">
+          <li><label class="checklist-item"><input type="checkbox" data-item="diploma" /><span class="check-icon">🎓</span><span class="check-label" data-i18n="check-diploma">畢業證書或修業證明</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="enrollment" /><span class="check-icon">📋</span><span class="check-label" data-i18n="check-enrollment">學籍記載表</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="idcard" /><span class="check-icon">🪪</span><span class="check-label" data-i18n="check-idcard">身分證</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="stamp" /><span class="check-icon">🔴</span><span class="check-label" data-i18n="check-stamp">個人印章</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="photo" /><span class="check-icon">🖼️</span><span class="check-label" data-i18n="check-photo">2 吋大頭照</span></label></li>
+          <li><label class="checklist-item"><input type="checkbox" data-item="money" /><span class="check-icon">💰</span><span class="check-label" data-i18n="check-money">50 元（換發身分證規費）</span></label></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="checklist-celebration" id="celebration" hidden>
+      <div class="celebration-emoji">🎉</div>
+      <strong data-i18n="checklist-done">你準備好了！</strong>
+      <p data-i18n="checklist-done-sub">記得早點出門，路上小心！</p>
+    </div>
+
+    <button class="checklist-reset" id="checklistReset" type="button">
+      <span data-i18n="checklist-reset">🔄 重新整理</span>
+    </button>
+  </aside>
+
+  <div class="checklist-overlay" id="checklistOverlay" hidden></div>
+
   <script src="script.js"></script>
 </body>
 </html>
