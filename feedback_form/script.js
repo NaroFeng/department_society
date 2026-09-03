@@ -586,7 +586,7 @@
       department: '資訊工程學系（乙B）',
       events: [
         { time_start: '07:40', time_end: '09:10', content: '吃早餐',
-          host: null, location: '待公布', target: '新生', type: 'admin' },
+          host: null, location: '理工大樓E319', target: '新生', type: 'admin' },
         { time_start: '09:30', time_end: '10:00', content: '「愛自己，從健康選擇開始—全面性教育與菸害防制」宣導講座',
           host: '身心健康中心衛保組 / 教育部部訂講師 根秀卿老師', location: '體育館', target: '全體新生', type: 'lecture' },
         { time_start: '10:10', time_end: '11:00', content: '填寫（輸入）資料和 UCAN 問卷（乙B、乙C）',
